@@ -10,7 +10,7 @@ export default function ProfilePage() {
   const [data, setData] = useState("nothing");
   const logout = async () => {
     try {
-      await axios.get("/api/users/logout");
+      await axios.get("/api/users/logout", { withCredentials: true });
       toast.success("Logout successfully");
       router.push("/login");
     } catch (error: any) {

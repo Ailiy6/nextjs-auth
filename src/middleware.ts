@@ -4,7 +4,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // Public routes — tak perlu login
+  // Public routes (tak perlu login)
   const isPublicPath =
     path === "/login" ||
     path === "/signup" ||
@@ -12,10 +12,9 @@ export async function middleware(request: NextRequest) {
     path === "/forgotpassword" ||
     path.startsWith("/resetpassword");
 
-  // Ambil token dari cookies
   const accessToken = request.cookies.get("token")?.value || "";
   const refreshToken = request.cookies.get("refreshToken")?.value || "";
-  // Helper untuk verify token
+
   const verifyToken = (token: string, secret: string) => {
     try {
       return jwt.verify(token, secret);
@@ -24,57 +23,69 @@ export async function middleware(request: NextRequest) {
     }
   };
 
-  const decodedAccessToken = accessToken
+  // Verify access token
+  const decodedAccess = accessToken
     ? verifyToken(accessToken, process.env.TOKEN_SECRET!)
     : null;
-  // Kalau user dah login dan cuba buka page public
-  if (isPublicPath && decodedAccessToken) {
-    return NextResponse.redirect(new URL("/", request.nextUrl));
-  }
-  // Kalau user belum login dan cuba buka private route
-  if (!isPublicPath && !decodedAccessToken) {
-    const decodedRefresh = refreshToken
-      ? verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET!)
-      : null;
 
-    if (decodedRefresh && typeof decodedRefresh !== "string") {
-      // ✅ Ensure it's a JwtPayload and has _id
-      const userId = (decodedRefresh as JwtPayload)._id;
-      // Kalau refresh token masih valid → buat access token baru
-      if (userId) {
-        const newAccessToken = jwt.sign(
-          { _id: userId },
-          process.env.TOKEN_SECRET!,
-          { expiresIn: "15m" }
-        );
-
-        const response = NextResponse.next();
-        response.cookies.set("token", newAccessToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          path: "/",
-          maxAge: 60 * 15, // 15 min
-        });
-
-        return response;
-      }
-    }
-    // Kalau dua-dua token invalid → redirect ke login
+  // 🧩 Case 1: User belum login dan nak masuk page private
+  if (!isPublicPath && !decodedAccess && !refreshToken) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
-  // Kalau semua ok, proceed
+
+  // 🧩 Case 2: Access token dah expired → guna refresh token
+  if (!isPublicPath && !decodedAccess && refreshToken) {
+    const decodedRefresh = verifyToken(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET!
+    );
+
+    if (decodedRefresh && typeof decodedRefresh !== "string") {
+      // Buat access token baru
+      const newAccessToken = jwt.sign(
+        {
+          _id: (decodedRefresh as JwtPayload)._id,
+          email: (decodedRefresh as JwtPayload).email,
+          username: (decodedRefresh as JwtPayload).username,
+        },
+        process.env.TOKEN_SECRET!,
+        { expiresIn: "15m" }
+      );
+
+      // Set cookie baru
+      const response = NextResponse.next();
+      response.cookies.set("token", newAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/",
+        maxAge: 60 * 15,
+      });
+
+      return response;
+    }
+
+    // Kalau refresh token invalid juga
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // 🧩 Case 3: User dah login tapi cuba masuk page login/signup
+  if (isPublicPath && decodedAccess) {
+    return NextResponse.redirect(new URL("/profile", request.url));
+  }
+
+  // ✅ Semua ok → proceed
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
     "/",
-    "/profile",
+    "/profile/:path*",
     "/login",
     "/signup",
     "/verifyemail",
     "/forgotpassword",
     "/resetpassword/:path*",
-    "/profile/:path*",
   ],
 };
