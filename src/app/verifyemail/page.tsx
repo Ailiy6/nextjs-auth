@@ -20,7 +20,8 @@ export default function VerifyEmailPage() {
   };
 
   useEffect(() => {
-    const urlToken = window.location.search.split("=")[1];
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get("token");
     setToken(urlToken || "");
   }, []);
 
@@ -36,15 +37,18 @@ export default function VerifyEmailPage() {
       <h2 className="p-2 bg-orange-500 text-black">
         {token ? `${token}` : "no token"}
       </h2>
-      {verified && (
-        <div>
-          <h2 className="text-2xl">Email Verified</h2>
-          <Link href="/login">Login</Link>
+      {verified && !error && (
+        <div className="text-center mt-4">
+          <h2 className="text-2xl text-green-500">✅ Email Verified!</h2>
+          <Link href="/login" className="underline text-blue-500">
+            Go to Login
+          </Link>
         </div>
       )}
       {error && (
-        <div>
-          <h2 className="text-2xl bg-red-500 text-black">Error </h2>
+        <div className="text-center mt-4">
+          <h2 className="text-2xl text-red-500">❌ Verification Failed</h2>
+          <p>Token may be invalid or expired.</p>
         </div>
       )}
     </div>
