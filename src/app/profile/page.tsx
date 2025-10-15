@@ -20,9 +20,15 @@ export default function ProfilePage() {
   };
 
   const getUserDetails = async () => {
-    const res = await axios.get("/api/users/me");
-    console.log(res.data);
-    setData(res.data.data._id);
+    try {
+      const res = await axios.get("/api/users/me", { withCredentials: true });
+      console.log(res.data);
+      setData(res.data.data._id);
+    } catch (error: any) {
+      console.log(error.message);
+      toast.error("Failed to get user details");
+      router.push("/login"); // Redirect to login page if user is not authenticated
+    }
   };
 
   return (
