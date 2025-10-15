@@ -12,11 +12,9 @@ export default function SignupPage() {
     password: "",
     username: "",
   });
-
-  const [buttonDisabled, setButtonDisabled] = React.useState(false);
+  const [buttonDisabled, setButtonDisabled] = React.useState(true);
   const [loading, setLoading] = React.useState(false);
 
-  // const notify = () => toast("Here is your toast.");
   const onSignup = async () => {
     try {
       setLoading(true);
@@ -45,43 +43,44 @@ export default function SignupPage() {
   }, [user]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2 ">
-      <h1 className=" text-white text-2xl">
+    <div className="flex flex-col items-center justify-center min-h-screen py-2">
+      <h1 className="text-white text-2xl">
         {loading ? "Processing" : "Signup"}
       </h1>
       <hr />
-      <label htmlFor="username">username</label>
+      <label htmlFor="username">Username</label>
       <input
-        className="p-2  text-black bg-amber-700 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:border-gray-600"
+        className="p-2 text-black bg-amber-700 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:border-gray-600"
         id="username"
         type="text"
         value={user.username}
         onChange={(e) => setUser({ ...user, username: e.target.value })}
-        placeholder="username"
+        placeholder="Username"
       />
-      <label htmlFor="email">email</label>
+      <label htmlFor="email">Email</label>
       <input
-        className="p-2  text-black bg-amber-700 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:border-gray-600"
+        className="p-2 text-black bg-amber-700 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:border-gray-600"
         id="email"
         type="email"
         value={user.email}
         onChange={(e) => setUser({ ...user, email: e.target.value })}
-        placeholder="email"
+        placeholder="Email"
       />
-      <label htmlFor="password">password</label>
+      <label htmlFor="password">Password</label>
       <input
         className="p-2 text-black bg-amber-700 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:border-gray-600"
         id="password"
         type="password"
         value={user.password}
         onChange={(e) => setUser({ ...user, password: e.target.value })}
-        placeholder="password"
+        placeholder="Password"
       />
       <button
         onClick={onSignup}
         className="p-2 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:border-gray-600 hover:bg-amber-600"
+        disabled={buttonDisabled || loading}
       >
-        {buttonDisabled ? "No signup" : "Signup"}
+        {buttonDisabled ? "No Signup" : "Signup"}
       </button>
       <Link href="/login">Login</Link>
     </div>
